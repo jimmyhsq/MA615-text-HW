@@ -5,12 +5,13 @@ library(magrittr)
 library(gutenbergr)
 library(ggplot2)
 library(scales)
+library(tidyverse)
 
 #Include this for the start
 data(stop_words)
 
 # Read in this book.
-book <- gutenberg_download(c(768))
+book <- gutenberg_download(c(1184))
 
 # Tidy the table by excluding common words and 
 tidybook <- book %>% 
@@ -34,4 +35,21 @@ tidybook %>%
   xlab(NULL) +
   coord_flip()
 
+#Sentiment Comparison
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+
+tidybook %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE)
+
+
+sentiment <- tidybook %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(chapter, index = linenumber %/% 80, sentiment) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
+
+ggplot(sentiment, aes(index, sentiment)) +
+  geom_col(show.legend = FALSE)
 
